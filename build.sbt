@@ -1,4 +1,4 @@
-name := "cluster"
+name := "sandbox-scala"
 
 scalaVersion := "2.11.8"
 
