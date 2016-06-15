@@ -1,0 +1,1183 @@
+
+1) Let's cover how to write a unit test in Scala with the ScalaTest framework.  This exercise will consist of adding a test to the IDE, executing it, and verifying its successful outcome. If you're already familiar with executing tests in an IDE this should be a fairly simple exercise. To better understand the ScalaTest framework, I recommend that you take a break from this exercise and browse the official documentation at http://www.scalatest.org/[the ScalaTest web site].
+
+We'll start with the "HtmlUtils" object (see <<objects_section>>). Create a new Scala class by right-clicking on the "src/main/scala" directory in the IDE and selecting *New -> Scala Class*. Type the name, "HtmlUtils", and set the type to an object. Replace the skeleton object with the following source:
+
+-------------------------------------------------------------------------------
+object HtmlUtils {
+  def removeMarkup(input: String) = {
+    input
+      .replaceAll("""</?\w[^>]*>""","")
+      .replaceAll("<.*>","")
+  }
+}
+-------------------------------------------------------------------------------
+
+The new "HtmlUtils.scala" file should be located in "src/main/scala", the root directory for source code in our project. Now add a new "HtmlUtilsSpec" class under "src/test/scala", creating the directory if necessary. Both SBT and IntelliJ will look for tests in this directory, a counterpart to the main "src/main/scala" directory. Add the following source to the "HtmlUtilsSpec.scala" file.
+
+-------------------------------------------------------------------------------
+import org.scalatest._                                                      
+
+class HtmlUtilsSpec extends FlatSpec with ShouldMatchers {                  
+
+  "The Html Utils object" should "remove single elements" in {              
+    HtmlUtils.removeMarkup("<br/>") should equal("")                        
+  }
+
+  it should "remove paired elements" in {
+    HtmlUtils.removeMarkup("<b>Hi</b>") should equal("Hi")
+  }
+
+  it should "have no effect on empty strings" in {
+    val empty = true
+    HtmlUtils.removeMarkup("").isEmpty should be(empty)                     
+  }
+
+}
+-------------------------------------------------------------------------------
+
+We're only using the +FlatSpec+ and +ShouldMatchers+ types from this package, but will import everything so we can easily add additional test utilities in the future (such as "OptionValues", a favorite of mine). The class +FlatSpec+ is one of several different test types you can choose from, modeled after Ruby's *RSpec*. +ShouldMatchers+ adds the +should+ and +be+ operators to your test, creating a domain-specific language that can help make your tests more readable.
+
+The first test starts off a bit differently from the other tests. With the +FlatSpec+, the first test in a file should start with a textual description of what you are testing in this file. Later tests will use the +it+ keyword to refer to this description. This helps to create highly readable test reports.
+
+In the test body, the +equal+ operator ensures that the value preceding +should+ is equal to its argument, here the empty string +""+. If not equal, it will cause the test to fail and exit immediately. Likewise, the +be+ operator fails the test if the value before +should+ isn't the same instance, useful for comparing global instances like +true+, +Nil+, and +None+.
+
+Before running the test, open the IntelliJ *Plugins* preference panel under *Preferences* and ensure that the "jUnit" plugin is installed. The plugin will ensure that your test results will be easily viewable and browseable.
+
+Once you have added the test to your project, go ahead and compile it in the IDE. If it doesn't compile, or it otherwise complains about the lack of a "ScalaTest" package, make sure your build script has the ScalaTest dependency and that you can view it in the "External Libraries" section of the "Project" view in IntelliJ.
+
+Now we'll run it. Right click on the test class's name, "HtmlUtilsSpec", and choose *Run 'HtmlUtilsSpec'*. Executing the test will take no more than a few seconds, and if you entered the test and original application in correctly they will all be successful. 
+
+
+Let's conclude this exercise with an actual exercise for you to implement: add additional tests to our "HtmlUtilsSpec" test class. Are there there any features areas that aren't yet tested? Are all valid HTML markup possibilities supported?
+
+There's also the question of whether Javascript contained within "script" tags should be stripped or appear along with the rest of the text. Consider this a bug in the original version of "HtmlUtils". Add a test to verify that the Javascript text will be tripped out and then run the test. When it fails, fix "HtmlUtils" and re-run the test to verify it has been fixed.
+
+Congratulations, you are now writing tests in Scala! Remember to keep writing tests as you work through the rest of the exercises in this book, using them to assert how your solutions should work and to catch any (unforseeable!) bugs in them.
+
+
+*Answer*
+
+
+A good use of tests is to test the challenging cases in addition to the "happy path" of simple test cases. I wasn't sure that the html utils function would be able to support html elements that cover more than a single line, but happily they were correctly stripped out.
+
+Here is the "HtmlUtils" object updated to strip out any Javascript code in `<script>` tags. The flag expression "(?s)" enables "DOTALL" mode which allows the regular expression to ignore line boundaries.
+
+
+[source,scala]
+-------------------------------------------------------------------------------
+object HtmlUtils {
+  def removeMarkup(input: String) = {
+    input
+      .replaceAll("(?s)<script.*</script>", "")
+      .replaceAll("""</?\w[^>]*>""","")
+      .replaceAll("<.*>","")
+  }
+}
+-------------------------------------------------------------------------------
+
+
+Here is its test class with two new tests, one to verify that multi-line elements are stripped and another to verify that Javascript code is filtered out.
+
+[source,scala]
+-------------------------------------------------------------------------------
+import org.scalatest._
+
+class HtmlUtilsSpec extends FlatSpec with ShouldMatchers {
+
+  "The Html Utils object" should "remove single elements" in {
+    HtmlUtils.removeMarkup("<br/>") should equal("")
+  }
+
+  it should "remove paired elements" in {
+    HtmlUtils.removeMarkup("<b>Hi</b>") should equal("Hi")
+  }
+
+  it should "have no effect on empty strings" in {
+    val empty = true
+    HtmlUtils.removeMarkup("").isEmpty should be(empty)
+  }
+
+  it should "support multiline tags" in {
+    val src = """
+<html
+>
+<body>
+Cheers
+<div
+class="header"></div
+>
+</head></html>
+    """
+
+    HtmlUtils.removeMarkup(src).trim should equal("Cheers")
+  }
+
+  it should "strip Javascript source" in {
+    val src = """
+<html>
+<head>
+<script type="text/javascript">
+  console.log("Yo");
+</script>
+</head></html>
+    """
+
+    HtmlUtils.removeMarkup(src) should not include "console.log"
+  }
+
+}
+-------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+2) Let's work on a different example from this chapter. Create a new Scala trait titled "SafeStringUtils" and add the following source:
+
+-------------------------------------------------------------------------------
+trait SafeStringUtils {
+  // Returns a trimmed version of the string wrapped in an Option, 
+  // or None if the trimmed string is empty.
+  def trimToNone(s: String): Option[String] = {
+    Option(s) map(_.trim) filterNot(_.isEmpty)
+  }
+}
+-------------------------------------------------------------------------------
+
+Verify that the trait compiles in the IDE. If it all works, complete the following steps:
+
+a) Create an object version of the trait. 
+
+b) Create a test class, "SafeStringUtilsSpec", to test the "SafeStringUtils.trimToNone()" method. Verify that it trims strings and safely handles null and empty strings. You should have 3-5 separate tests in your test class. Run the test class and verify it completes successfully.
+
+c) Add a method that safely converts a string to an integer, without throwing an error if the string is unparseable. Write and execute tests for valid and invalid input. What are the most appropriate monadic collections to use in this function?
+
+d) Add a method that safely converts a string to a long, without throwing an error if the string is unparseable. Write and execute tests for valid and invalid input. What are the most appropriate monadic collections to use in this function?
+
+e) Add a method that returns a randomly generated string of the given size, limited to only upper- and lower-case letters. Write and execute tests that verify the correct contents are return and that invalid input is handled. Are there any appropriate monadic collections to use in this function?
+
+
+*Answer*
+
+
+a) Creating an object version of a trait is a popular way to extend the usefulness of that trait. 
+
+[source,scala]
+-------------------------------------------------------------------------------
+object SafeStringUtils extends SafeStringUtils
+-------------------------------------------------------------------------------
+
+
+b) A good test should indicate a specific feature, whether functional or non-functional. Here are additional tests that clearly indicate the desired behavior from the object.
+
+
+[source,scala]
+-------------------------------------------------------------------------------
+import org.scalatest._
+
+class SafeStringUtilsSpec extends FlatSpec with ShouldMatchers {
+
+  "The Safe String Utils object" should "trim empty strings to None" in {
+    SafeStringUtils.trimToNone("") should be(None)
+    SafeStringUtils.trimToNone(" ") should be(None)
+    SafeStringUtils.trimToNone("           ") should be(None) // tabs and spaces
+  }
+
+  it should "handle null values safely" in {
+    SafeStringUtils.trimToNone(null) should be(None)
+  }
+
+  it should "trim non-empty strings" in {
+    SafeStringUtils.trimToNone(" hi there ") should equal(Some("hi there"))
+  }
+
+  it should "leave untrimmable non-empty strings alone" in {
+    val testString = "Goin' down that road feeling bad ."
+    SafeStringUtils.trimToNone(testString) should equal(Some(testString))
+  }
+
+}
+-------------------------------------------------------------------------------
+
+
+c) The new "parseToInt" function first trims the input string, and then passes the value (if present) to a +toInt+ funciton that is wrapped in +Try+ and converted to +Option+. The +flatMap+ operation is used here as +toOption+ returns its own option, and we don't need two levels of options.
+
+Also, this is a good time to convert the "trimToNone" comment into a full scaladoc header, describing the input parameter and return value.
+
+[source,scala]
+-------------------------------------------------------------------------------
+import scala.util.Try
+
+trait SafeStringUtils {
+
+  /**
+   * Returns a trimmed version of the string wrapped in an Option,
+   * or None if the trimmed string is empty.
+   *
+   * @param s the string to trim
+   * @return Some with the trimmed string, or None if empty
+   */
+  def trimToNone(s: String): Option[String] = {
+    Option(s) map(_.trim) filterNot(_.isEmpty)
+  }
+
+  /**
+   * Returns the string as an integer or None if it could not be converted.
+   *
+   * @param s the string to be converted to an integer
+   * @return Some with the integer value or else None if not parseable
+   */
+  def parseToInt(s: String): Option[Int] = {
+    trimToNone(s) flatMap { x => Try(x.toInt).toOption }
+  }
+
+}
+
+object SafeStringUtils extends SafeStringUtils
+-------------------------------------------------------------------------------
+
+
+Here's the full test class including three new tests for the "parseToInt" function. 
+
+[source,scala]
+-------------------------------------------------------------------------------
+import org.scalatest._
+
+class SafeStringUtilsSpec extends FlatSpec with ShouldMatchers {
+
+  "The Safe String Utils object" should "trim empty strings to None" in {
+    SafeStringUtils.trimToNone("") should be(None)
+    SafeStringUtils.trimToNone(" ") should be(None)
+    SafeStringUtils.trimToNone("           ") should be(None) // tabs and spaces
+  }
+
+  it should "handle null values safely" in {
+    SafeStringUtils.trimToNone(null) should be(None)
+  }
+
+  it should "trim non-empty strings" in {
+    SafeStringUtils.trimToNone(" hi there ") should equal(Some("hi there"))
+  }
+
+  it should "leave untrimmable non-empty strings alone" in {
+    val testString = "Goin' down that road feeling bad ."
+    SafeStringUtils.trimToNone(testString) should equal(Some(testString))
+  }
+
+  it should "parse valid integers from strings" in {
+    SafeStringUtils.parseToInt("5") should be(Some(5))
+    SafeStringUtils.parseToInt("0") should be(Some(0))
+    SafeStringUtils.parseToInt("99467") should be(Some(99467))
+  }
+
+  it should "trim unnecessary white space before parsing" in {
+    SafeStringUtils.parseToInt("  5") should be(Some(5))
+    SafeStringUtils.parseToInt("0  ") should be(Some(0))
+    SafeStringUtils.parseToInt("  99467  ") should be(Some(99467))
+  }
+
+  it should "safely handle invalid integers" in {
+    SafeStringUtils.parseToInt("5 5") should be(None)
+    SafeStringUtils.parseToInt("") should be(None)
+    SafeStringUtils.parseToInt("abc") should be(None)
+    SafeStringUtils.parseToInt("1!") should be(None)
+  }
+
+}
+-------------------------------------------------------------------------------
+
+
+
+d) Here's the final version of SafeStringUtils with the new random string function.
+
+
+
+[source,scala]
+-------------------------------------------------------------------------------
+import scala.util.{Random, Try}
+
+trait SafeStringUtils {
+
+  /**
+   * Returns a trimmed version of the string wrapped in an Option,
+   * or None if the trimmed string is empty.
+   *
+   * @param s the string to trim
+   * @return Some with the trimmed string, or None if empty
+   */
+  def trimToNone(s: String): Option[String] = {
+    Option(s) map(_.trim) filterNot(_.isEmpty)
+  }
+
+  /**
+   * Returns the string as an integer or None if it could not be converted.
+   *
+   * @param s the string to be converted to an integer
+   * @return Some with the integer value or else None if not parseable
+   */
+  def parseToInt(s: String): Option[Int] = {
+    trimToNone(s) flatMap { x => Try(x.toInt).toOption }
+  }
+
+  /**
+   * Returns a string composed of random lower- and upper-case letters
+   *
+   * @param size the size of the composed string
+   * @return the composed string
+   */
+  def randomLetters(size: Int): String = {
+    val validChars: Seq[Char] = ('A' to 'Z') ++ ('a' to 'z')
+    1 to size map { _ => Random nextInt validChars.size } map validChars mkString ""
+  }
+
+}
+
+object SafeStringUtils extends SafeStringUtils
+-------------------------------------------------------------------------------
+
+
+Following is the final version of the test class with three new tests.
+
+
+[source,scala]
+-------------------------------------------------------------------------------
+import org.scalatest._
+
+class SafeStringUtilsSpec extends FlatSpec with ShouldMatchers {
+
+  "The Safe String Utils object" should "trim empty strings to None" in {
+    SafeStringUtils.trimToNone("") should be(None)
+    SafeStringUtils.trimToNone(" ") should be(None)
+    SafeStringUtils.trimToNone("           ") should be(None) // tabs and spaces
+  }
+
+  it should "handle null values safely" in {
+    SafeStringUtils.trimToNone(null) should be(None)
+  }
+
+  it should "trim non-empty strings" in {
+    SafeStringUtils.trimToNone(" hi there ") should equal(Some("hi there"))
+  }
+
+  it should "leave untrimmable non-empty strings alone" in {
+    val testString = "Goin' down that road feeling bad ."
+    SafeStringUtils.trimToNone(testString) should equal(Some(testString))
+  }
+
+  it should "parse valid integers from strings" in {
+    SafeStringUtils.parseToInt("5") should be(Some(5))
+    SafeStringUtils.parseToInt("0") should be(Some(0))
+    SafeStringUtils.parseToInt("99467") should be(Some(99467))
+  }
+
+  it should "trim unnecessary white space before parsing" in {
+    SafeStringUtils.parseToInt("  5") should be(Some(5))
+    SafeStringUtils.parseToInt("0  ") should be(Some(0))
+    SafeStringUtils.parseToInt("  99467  ") should be(Some(99467))
+  }
+
+  it should "safely handle invalid integers" in {
+    SafeStringUtils.parseToInt("5 5") should be(None)
+    SafeStringUtils.parseToInt("") should be(None)
+    SafeStringUtils.parseToInt("abc") should be(None)
+    SafeStringUtils.parseToInt("1!") should be(None)
+  }
+
+  it should "generate random strings with only lower- and upper-case letters" in {
+    SafeStringUtils.randomLetters(200).replaceAll("[a-zA-Z]","") should equal("")
+  }
+
+  it should "be sufficiently random" in {
+    val src = SafeStringUtils.randomLetters(100).toList.sorted
+    val dest = SafeStringUtils.randomLetters(100).toList.sorted
+    src should not equal dest
+  }
+
+  it should "handle invalid input" in {
+    SafeStringUtils.randomLetters(-1) should equal("")
+  }
+
+
+}
+-------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+3) Write a command line application that will search and replace text inside files. The input arguments are a search pattern, a regular expression, the replacement text, and one or more files to search. 
+
+a) Start by writing a skeleton command line application that parses the input arguments: the search pattern, the replacement text arguments, and the files to process as a list of strings. Print these out to verify you have captured them correctly.
+
+b) Execute this skeleton applicaton by running it from the command line with +sbt "run-main <object name> <input arguments>"+. The input arguments must be in the same double quotes as the "run-main" argument so that the SBT tool reads it all as a single command.  You can also run it from the IDE by selecting *Run -> Run...* and creating a runtime configuration. Runtime configurations allow you to specify the input arguments once, or else to show the entire configuration every time it is executed. Verify that your search pattern, replacement text and list of files is successfully parsed.
+
+c) Implement the core of the application by reading each input file, searching and replacing the specified pattern, and then printing the result out to the console. Try this with a few input files to verify your pattern gets replaced.
+
+d) Now write the modified text back to the file it was read from. Here is an example of using the Java library to write a string to a file.
+
+-------------------------------------------------------------------------------
+import java.io._
+val writer = new PrintWriter(new File("out.txt"))
+writer.write("Hello, World!\nHere I am!")
+writer.close()
+-------------------------------------------------------------------------------
+
+e) Make your application safer to use by having it create a backup of its input files before modifying them. You can create a backup by first writing the unmodified contents out to a file with the input's name plus ".bak". Use +new java.io.File(<file name>).exists()+ to ensure that the backup file's name does *not* exist before creating it. You can try incremental numbers such as ".bak2", ".bak3" to find unique backup file names.
+
+f) Create a test class and write tests to verify that your application will work as expected. The core functionality of your application should be invocable as methods without actually launching the application. Make sure the functionality is broken down into methods of a readable and manageable size, and then write individual tests for the core methods as well as the +main+ method. To end the exercise, run your tests and verify they all succeed, then run your application from the command line with a test file. 
+
+
+*Answer*
+
+Here's my solution for the application, which uses a set of short, single-purpose functions.
+
+[source,scala]
+-------------------------------------------------------------------------------
+
+import java.io.{PrintWriter, File}
+
+/**
+ * An application that can replace text inside existing files.
+ *
+ * Usage: MultiReplacer <search pattern> <replacement text> file1 [file2...]
+ */
+object MultiReplacer {
+
+  def replaceInFile(search: String, replace: String, file: File): Unit = {
+    val text = read(file)
+    createBackupFile(text, file)
+
+    val updated = text.replaceAll(search, replace)
+    write(updated, file)
+  }
+
+  def replaceInFileNames(search: String, replace: String, files: List[String]): Unit = {
+    val validFiles: List[File] = files map (new File(_)) filter (_.exists())
+
+    validFiles foreach { f =>
+      replaceInFile(search, replace, f)
+    }
+  }
+
+  def read(file: File) = io.Source.fromFile(file).getLines().mkString("\n")
+
+  def createBackupFile(s: String, file: File): Unit = {
+    val dir = new File(file.getAbsoluteFile.getParent)
+
+    var backupFile = new File(dir, s"${file.getName}.bak")
+    while (backupFile.exists()) {
+      backupFile = new File(dir, s"${file.getName}_${System.currentTimeMillis()}.bak")
+    }
+    write(s, backupFile)
+  }
+
+  def write(s: String, file: File): Unit = {
+    val writer = new PrintWriter(file)
+    writer.write(s)
+    writer.close()
+  }
+
+  def main(args: Array[String]) {
+    args.toList match {
+      case search :: replace :: files if files.nonEmpty =>
+        replaceInFileNames(search, replace, files)
+      case _ =>
+        println("Usage: MultiReplacer <search pattern> <replacement text> file1 [file2...]")
+    }
+  }
+}
+-------------------------------------------------------------------------------
+
+
+Here's my test class, including a utility method to write the content to a new unique file for testing.
+
+[source,scala]
+-------------------------------------------------------------------------------
+import java.io.File
+import org.scalatest._
+
+class MultiReplacerSpec extends FlatSpec with ShouldMatchers {
+
+  import MultiReplacer._
+
+  val content = "Twas brillig, and the slithy toves"
+
+  "The MultiReplacer app" should "replace basic patterns" in {
+    val testFile = newFile(content)
+
+    main(Array("brill[^,]*", "the night before xmas", testFile.getName))
+    read(testFile) should equal("Twas the night before xmas, and the slithy toves")
+
+    main(Array("the slithy.*", "all thru the house", testFile.getName))
+    read(testFile) should equal("Twas the night before xmas, and all thru the house")
+  }
+
+  it should "create a backup file before replacing text" in {
+    val testFile = newFile(content)
+
+    main(Array("brill[^,]*", "the night before xmas", testFile.getName))
+    read(testFile) should equal("Twas the night before xmas, and the slithy toves")
+
+    val backupFile = new File(testFile.getName + ".bak")
+    read(backupFile) should equal(content)
+  }
+  
+  it should "create a backup file of any file" in {
+    val testFile = newFile(content)
+    createBackupFile(content, testFile)
+    val backupFile = new File(testFile.getName + ".bak")
+    read(backupFile) should equal(read(testFile))
+  }
+
+  it should "replace content in a file" in {
+    val testFile = newFile(content)
+
+    replaceInFile("Twas brilli", "I was sleepin", testFile)
+    read(testFile) should equal("I was sleeping, and the slithy toves")
+  }
+
+  it should "replace content in a series of files by file name" in {
+    val testFile1 = newFile(content)
+    val testFile2 = newFile(content)
+
+    val files = List(testFile1.getName, testFile2.getName)
+    replaceInFileNames("Twas", "Twasn't", files)
+    read(testFile1) should equal("Twasn't brillig, and the slithy toves")
+    read(testFile2) should equal("Twasn't brillig, and the slithy toves")
+  }
+
+  private def newFile(content: String): File = {
+    val testFile = new File(s"testy_${SafeStringUtils.randomLetters(20)}.txt")
+    write(content, testFile)
+    testFile
+  }
+
+}
+
+-------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+4) Write an application that summarizes a file. It will take a single text file as input and print an overall summary including the number of characters, words and paragraphs as well as a list of the top 20 words by usage.
+
+The application should be smart enough to filter out non-words. Parsing a Scala file should reveal words, for example, and not special characters such as "{" or "//". It should also be able to count paragraphs that have real content versus empty space.
+
+Write tests that use your own multi-line strings to verify the output. Your application should be modularized into discrete methods for easier testing. You should be able to write a test that gives the string "this is is not a test" and receives an instance that will reveal the word "is" as the top used word.
+
+To really test out your knowledge of this chapter's contents, make sure to use objects, traits, and case classes in your solution.
+
+
+*Answer*
+
+Answering this exercise requires some knowledge of regular expressions. For me, that means opening up the javadocs for the +java.util.regex.Pattern+ class and experimenting with solutions in the REPL.
+
+Here's my answer, and app that takes advantage of local traits to summarize a file into a case class in one step and then convert this into a printable summary in the next step.
+
+
+[source,scala]
+-------------------------------------------------------------------------------
+import java.io.File
+
+
+/**
+ * FileSummy is an app that prints a short summary of the content of one or more files
+ */
+object FileSummy extends FileStatsBuilder with FileStatsFormatting {
+
+  def summarize(file: File): Unit = {
+    val stats = buildFileStats(file)
+    val formatted = formatStats(stats)
+    println(formatted)
+  }
+
+  def main(args: Array[String]) {
+    val files = args map (new File(_)) filter (_.exists())
+    files foreach summarize
+  }
+
+}
+
+case class Stats(fileName: String, chars: Int, words: Int, paragraphs: Int, toppies: List[String])
+
+trait FileStatsBuilder {
+
+  def buildFileStats(file: File): Stats = {
+
+    def read(file: File) = io.Source.fromFile(file).getLines().mkString("\n")
+
+    val s: String = read(file).trim
+
+    val words = s.split("""\W+""")
+    val paragraphs = s.split("""\w+\W*\n\n""")
+
+    val toppies: List[String] = words
+      .map(_.toLowerCase)
+      .groupBy(w => w).toList
+      .sortBy(_._2.size).reverse
+      .map(_._1)
+      .take(20)
+
+    Stats(file.getName, s.size, words.size, paragraphs.size, toppies)
+  }
+
+}
+
+trait FileStatsFormatting {
+
+  def formatStats(stats: Stats): String = {
+    import stats._
+
+    val formatted = s"""File "$fileName" has $chars chars, $words words and $paragraphs paragraphs.
+The top 20 words were: ${toppies.mkString(", ")}."""
+
+    formatted
+      .replaceAll("\n", " ")
+      .replaceAll(", ([^,]*)$", ", and $1")
+  }
+
+}
+-------------------------------------------------------------------------------
+
+
+The test class for FileSummy tests the file summarization and statistics formatting, but not the actual printed version. Without some trickery about redirecting Java's +System.out+ there isn't a good way to capture its output. Fortunately the +println+ is only a single step, and the rest of the app uses functions that are easily testable.
+
+[source,scala]
+-------------------------------------------------------------------------------
+
+import java.io.{PrintWriter, File}
+import org.scalatest._
+
+
+class FileSummySpec extends FlatSpec with ShouldMatchers {
+
+  import FileSummy._
+
+  "The FileSummy app" should "correctly summarize a short file" in {
+    val file = newFile("this is is not a test")
+    val stats = buildFileStats(file)
+
+    stats.words should equal(6)
+    stats.toppies.head should equal("is")
+  }
+
+  it should "format the stats correctly" in {
+    val file = newFile("this is is not a test")
+    val stats = buildFileStats(file)
+    val formatted = formatStats(stats)
+
+    formatted should include ("21 chars")
+    formatted should include ("6 words")
+    formatted should include ("1 paragraphs")
+    formatted should include (file.getName)
+  }
+
+  it should "recognize paragraphs, ignoring non-word ones" in {
+    val contents = """
+
+
+The fire is slowly dying,
+And my dear, we're still good-by-ing.
+But, as long as you love me so,
+Let It Snow! Let It Snow! Let It snow
+
+{}
+
+Oh, it doesn't show signs of stopping,
+And I've brought some corn for popping,
+Since the lights are turned way down low,
+Let It Snow! Let It Snow! Let It Snow!
+    """
+
+    val file = newFile(contents)
+    val stats = buildFileStats(file)
+    stats.paragraphs should equal(2)
+  }
+
+
+  private def newFile(content: String): File = {
+    val testFile = new File(s"summytest_${SafeStringUtils.randomLetters(20)}.txt")
+    val writer = new PrintWriter(testFile)
+    writer.write(content)
+    writer.close()
+    testFile
+  }
+
+}
+-------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+5) Write an application that reports on the most recently closed issues in a given Github project. The input arguments should include the repository name, project name, and an optional number of issues to report with a default value of 10) The output will have a report header and display each issue's number, title, user name, number of comments, and label names. The output should be well-formatted, with fixed-width columns delimited with pipes (+|+) and a header delimited with equals signs (+=+).
+
+You'll need to in read in the issues from the Github API (see exercise 7 in the "Collections" chapter for information on reading a URL's contents), parse the JSON values, and then print a detailed format. Here is an example url for returning the 10 most recent closed issues from the official Scala project on Github.
+
+-------------------------------------------------------------------------------
+https://api.github.com/repos/scala/scala/issues?state=closed&per_page=10
+-------------------------------------------------------------------------------
+
+We'll use the *Json4s* library to parse the JSON response into a list of our own case classes. First, add this dependency to your build script and rebuild the project.
+
+-------------------------------------------------------------------------------
+"org.json4s" %% "json4s-native" % "3.2.10"
+-------------------------------------------------------------------------------
+
+This can go either before or after the Scalatest dependency. IntelliJ should pick up the change, download the library and rebuild your project. If it is not doing so, open the *SBT* view in IntelliJ and refresh the project, or run +sbt clean compile+ from the command line.
+
+The JSON response from the API above is rather large, but you don't need to parse all of the fields. You should design a case class that contains the exact fields you want to parse from the JSON, using the +Option+ type for nullable or optional fields. When you parse the JSON response, Json4s will insert only the fields you have defined in your case class and ignore the rest.
+
+Here is an example of using Json4s to parse the "labels" array from the larger Github issue document. If you study the output from the API for a single record, you should be able to design a series of case classes that will only contain the information you need. Note that the JSON document returned by the API is an array, so you will probably need to invoke the +extract+ method with a +List+ (e.g., +extract[List[GithubIssue]]+).
+
+-------------------------------------------------------------------------------
+import org.json4s.DefaultFormats                                          <1>
+import org.json4s.native.JsonMethods                                      <2>
+
+val jsonText = """
+{
+  "labels": [
+    {
+      "url": "https://api.github.com/repos/scala/scala/labels/tested",
+      "name": "tested",
+      "color": "d7e102"
+    }
+  ]
+}
+"""
+
+case class Label(url: String, name: String)                               <3>
+case class LabelDocument(labels: List[Label])                             <4>
+  
+implicit val formats = DefaultFormats                                     <5>
+val labelDoc = JsonMethods.parse(jsonText).extract[LabelDocument]         <6>
+
+val labels = labelDoc.labels
+val firstLabel = labels.headOption.map(_.name)
+-------------------------------------------------------------------------------
+
+<1> +DefaultFormats+ has support for common date formats as well as numbers and strings. 
+<2> We're using the "native" JSON parser in +JsonMethods+ to parse JSON documents and extract them into case class instances.
+<3> A "Label" is what I'm calling an item in the "labels" JSON array. Note that I didn't need to specify the "color" field.
+<4> The total JSON document has a single field, "labels", so we need a case class that represents the document.
+<5> The +implicit+ keyword is one we'll study in Chapter 10) I'm sorry to spring this on you before we have had a chance to cover it, but you'll need this line to ensure that Json4s can parse your JSON document.
+<6> +JsonMethods+ parses the JSON text to its own intermediate format, which can then be extracted with a given case class.
+
+
+*Answer*
+
+
+The json4s library can parse JSON documents into case class instances. To support parting the Github JSON document, I created a main class class plus additional case classes for the "user" and "labels" fields. 
+
+Here is my solution to this exercise.
+
+
+[source,scala]
+-------------------------------------------------------------------------------
+import org.json4s.DefaultFormats
+import org.json4s.native.JsonMethods
+
+
+case class GithubUser(login: String)
+
+case class GithubLabel(name: String)
+
+case class GithubIssue(number: Int, title: String, user: GithubUser, labels: List[GithubLabel], comments: Int)
+object GithubIssue {
+
+  implicit val formats = DefaultFormats
+
+  def parseIssuesFromJson(jsonText: String): List[GithubIssue] = {
+    JsonMethods.parse(jsonText).extract[List[GithubIssue]]
+  }
+
+}
+
+
+/**
+ * The Github Issue Reporter prints a report of recently closed issues in the given github repo.
+ */
+object GHIssueReporter {
+
+  /**
+   * Retrieves the latest closed Github issues and prints a report
+   */
+  def report(user: String, repo: String, count: Int = 10): Unit = {
+    println(s"Creating a report for $user / $repo on $count issues")
+
+    val content: String = githubClosedIssues(user, repo, count)
+    val issues: List[GithubIssue] = GithubIssue.parseIssuesFromJson(content)
+    val reportContent = buildReport(issues)
+    println(reportContent)
+  }
+
+  /**
+   * Returns a formatted report of the given issues with column names and a horizontal border
+   */
+  def buildReport(issues: List[GithubIssue]): String = {
+    val issueRows = issues map formatIssue
+    val maxLength = issueRows.maxBy(_.size).size
+    val border = "=" * maxLength
+
+    val rows = formattedHeader :: border :: issueRows
+    rows mkString ("\n", "\n", "\n")
+  }
+
+  /**
+   * Format a Github issue as a single row in the report
+   */
+  def formatIssue(i: GithubIssue): String = {
+    val labelNames = i.labels.map(_.name).mkString(",")
+    val fields: List[String] = List(i.number.toString, i.title, i.user.login, i.comments.toString, labelNames)
+    val columns = formatFixedWidthColumns(fields)
+
+    columns mkString ("|","|","|")
+  }
+
+  /**
+   * The report header
+   */
+  lazy val formattedHeader = {
+    val columns = formatFixedWidthColumns(List("Id", "Title", "User", "Comments", "Labels"))
+    columns mkString ("|","|","|")
+  }
+
+  /**
+   * Format the given strings into fixed-width columns for the issue report
+   * @param cols a list of the 5 output fields
+   * @return the output fields with fixed-width formatting
+   */
+  def formatFixedWidthColumns(cols: List[String]): List[String] = {
+    if (cols.size < 5) cols
+    else List(
+      f"${cols(0)}%-7.7s",
+      f"${cols(1)}%-70.70s",
+      f"${cols(2)}%-15.15s",
+      f"${cols(3)}%-9.9s",
+      f"${cols(4)}%-20.20s"
+    )
+  }
+
+  /**
+   * Return a JSON document of recently closed issues in the given github repo
+   */
+  def githubClosedIssues(user: String, repo: String, count: Int): String = {
+
+    val url = s"https://api.github.com/repos/$user/$repo/issues?state=closed&per_page=$count"
+
+    val lines = io.Source.fromURL(url).getLines().toList
+    val content = lines.map(_.trim).mkString("")
+    content
+  }
+
+
+  def main(args: Array[String]): Unit = {
+
+    // These regex patterns ensure the input is valid and parseable
+    val userRepoRegex = """(\w+)/(\w+)""".r
+    val numIssuesRegex = """(\d+)""".r
+
+    args.toList match {
+      case userRepoRegex(user, repo) :: numIssuesRegex(numIssues) :: Nil =>
+        report(user, repo, numIssues.toInt)
+      case userRepoRegex(user, repo) :: Nil =>
+        report(user, repo)
+      case _ =>
+        println("Usage: GHIssueReporter user/repo [number of issues]")
+    }
+  }
+
+}
+-------------------------------------------------------------------------------
+
+
+
+
+6) This exercise depends on the previous exercise being finished. Once you have the completed Github report application, let's work on refactoring it for better reusability and reliability.
+
+a) Start by writing tests for the Github report to verify the correct behavior of each component. How much of the logic in the application can you test if your computer lacked an internet connection? You should be able to test most of the logic without being able to actually connect to the Github site.
+
+b) Refactor the JSON handling code out to its own trait, eg "JsonSupport". Write tests to verify that it parses JSON code correctly, and handles exceptions that may be thrown by the Json4s library. Would it be useful to provide an object version of this trait?
+
+c) Do the same for the web handling code. Create your own "HtmlClient" trait and object that can take a url and return the content as a list of strings. Can you include the server's status response in a class along with the content? Make sure to write tests to verify the web handling code can prevent any exceptions from being thrown. 
+
+d) Finally, refactor your report generation code, the part that handles the clean fixed-width columns, into a reusable trait. Can it take a tuple of any size and print out its contents? Is there a more appropriate data type that it should take, one that supports variable numbers of columns but knows how to print out strings versus double values? Make sure your report generation code takes the maximum line width as an argument.
+
+
+*Answer*
+
+
+a) Here's my test class, including the full JSON from a single Github issue. I used Java's +ByteArrayOutputStream+ and Scala's +Console+ to capture output from +println+ statements for verification.
+
+[source,scala]
+-------------------------------------------------------------------------------
+
+import java.io.ByteArrayOutputStream
+
+import org.scalatest._
+
+trait PrintlnTesting {
+
+  /**
+   * Captures and returns all stdout / println output.
+   * @param f a function with no input or return values
+   * @return the text printed to stdout while executing the function
+   */
+  def withPrintlnCapture(f: => Unit): String = {
+    val buffer = new ByteArrayOutputStream()
+    Console.withOut(buffer)(f)
+    buffer.toString
+  }
+}
+
+class GHIssueReporterSpec extends FlatSpec with ShouldMatchers with PrintlnTesting {
+
+  import ch9.GHIssueReporter._
+
+
+  "The GHIssueReporter app" should "catch invalid input" in {
+    val sp = " *"
+
+    withPrintlnCapture { main(Array("")) } should include("Usage: GHIssueReporter user/repo")
+    withPrintlnCapture { main(Array("hohoho")) } should include("Usage: GHIssueReporter user/repo")
+    withPrintlnCapture { main(Array("hi", "there")) } should include("Usage: GHIssueReporter user/repo")
+    withPrintlnCapture { main(Array("hi", "there", "everyone")) } should include("Usage: GHIssueReporter user/repo")
+    withPrintlnCapture { main(Array("hi/there", "everyone")) } should include("Usage: GHIssueReporter user/repo")
+  }
+
+  it should "parse the number of issues to report" in {
+    val output = withPrintlnCapture { main(Array("slick/slick","1")) }
+    output should not include "Usage: GHIssueReporter user/repo"
+    output should include ("Comments")
+    output should include ("Labels")
+  }
+
+  it should "build a report from a list of issues" in {
+    val issues = GithubIssue.parseIssuesFromJson(sampleJsonIssue)
+    val report = buildReport(issues)
+    report should include("|4239   |")
+    report should include("|Trivial refactoring of scala / actors                                 |")
+    report should include("|jxcoder        |")
+    report should include("|5        |")
+    report should include("|reviewed,tested     |")
+  }
+
+  it should "format a single issue into a line of text" in {
+    val issues = GithubIssue.parseIssuesFromJson(sampleJsonIssue)
+    val report = formatIssue(issues.head)
+    report should include("|4239   |")
+    report should include("|Trivial refactoring of scala / actors                                 |")
+    report should include("|jxcoder        |")
+    report should include("|5        |")
+    report should include("|reviewed,tested     |")
+  }
+
+  it should "read issues live from Github" in {
+    val json = githubClosedIssues("slick", "slick", 3)
+    json should not equal ""
+    json should include("milestone")
+    json should include("api.github.com")
+    json should include("created_at")
+    json should include("organizations_url")
+
+  }
+
+  "The GithubIssue object" should "parse a JSON string into a new instance" in {
+    val issues = GithubIssue.parseIssuesFromJson(sampleJsonIssue)
+    issues.size should equal(1)
+
+    val issue = issues.head
+    issue.number should equal(4239)
+    issue.title should include("Trivial refactoring of scala")
+    issue.user.login should equal("jxcoder")
+    issue.labels.map(_.name) should contain("reviewed")
+    issue.labels.map(_.name) should contain("tested")
+  }
+
+
+
+  val sampleJsonIssue = """[{"url": "https://api.github.com/repos/scala/scala/issues/4239","labels_url": "https://api.github.com/repos/scala/scala/issues/4239/labels{/name}","comments_url": "https://api.github.com/repos/scala/scala/issues/4239/comments","events_url": "https://api.github.com/repos/scala/scala/issues/4239/events","html_url": "https://github.com/scala/scala/pull/4239","id": 53791036,"number": 4239,"title": "Trivial refactoring of scala / actors","user": {"login": "jxcoder","id": 1075547,"avatar_url": "https://avatars.githubusercontent.com/u/1075547?v=3","gravatar_id": "","url": "https://api.github.com/users/jxcoder","html_url": "https://github.com/jxcoder","followers_url": "https://api.github.com/users/jxcoder/followers","following_url": "https://api.github.com/users/jxcoder/following{/other_user}","gists_url": "https://api.github.com/users/jxcoder/gists{/gist_id}","starred_url": "https://api.github.com/users/jxcoder/starred{/owner}{/repo}","subscriptions_url": "https://api.github.com/users/jxcoder/subscriptions","organizations_url": "https://api.github.com/users/jxcoder/orgs","repos_url": "https://api.github.com/users/jxcoder/repos","events_url": "https://api.github.com/users/jxcoder/events{/privacy}","received_events_url": "https://api.github.com/users/jxcoder/received_events","type": "User","site_admin": false},"labels": [{"url": "https://api.github.com/repos/scala/scala/labels/reviewed","name": "reviewed","color": "02e10c"},{"url": "https://api.github.com/repos/scala/scala/labels/tested","name": "tested","color": "d7e102"}],"state": "closed","locked": false,"assignee": null,"milestone": {"url": "https://api.github.com/repos/scala/scala/milestones/45","labels_url": "https://api.github.com/repos/scala/scala/milestones/45/labels","id": 899891,"number": 45,"title": "2.11.6","description": "Merge to 2.11.x.\r\n\r\nRelease by end of Q1 2015.","creator": {"login": "adriaanm","id": 91083,"avatar_url": "https://avatars.githubusercontent.com/u/91083?v=3","gravatar_id": "","url": "https://api.github.com/users/adriaanm","html_url": "https://github.com/adriaanm","followers_url": "https://api.github.com/users/adriaanm/followers","following_url": "https://api.github.com/users/adriaanm/following{/other_user}","gists_url": "https://api.github.com/users/adriaanm/gists{/gist_id}","starred_url": "https://api.github.com/users/adriaanm/starred{/owner}{/repo}","subscriptions_url": "https://api.github.com/users/adriaanm/subscriptions","organizations_url": "https://api.github.com/users/adriaanm/orgs","repos_url": "https://api.github.com/users/adriaanm/repos","events_url": "https://api.github.com/users/adriaanm/events{/privacy}","received_events_url": "https://api.github.com/users/adriaanm/received_events","type": "User","site_admin": false},"open_issues": 26,"closed_issues": 9,"state": "open","created_at": "2014-12-11T01:11:35Z","updated_at": "2015-01-10T14:22:22Z","due_on": "2016-03-25T07:00:00Z","closed_at": null},"comments": 5,"created_at": "2015-01-08T19:36:11Z","updated_at": "2015-01-09T02:09:25Z","closed_at": "2015-01-08T21:17:45Z","pull_request": {"url": "https://api.github.com/repos/scala/scala/pulls/4239","html_url": "https://github.com/scala/scala/pull/4239","diff_url": "https://github.com/scala/scala/pull/4239.diff","patch_url": "https://github.com/scala/scala/pull/4239.patch"},"body": "Updated versions from 2013 to 2015.\r\nRemoved empty lines at the end of file."}]"""
+}
+-------------------------------------------------------------------------------
+
+
+
+b) The JSON parsing in the "GithubIssue" object works with valid input, but falls apart when invalid data is used. As part of moving the JSON parsing to a separate trait, we should also make sure that invalid input will be safely handled. 
+
+Here's a "JSONSupport" trait that also contains the imports for json4s classes, as the rest of the code doesn't need them. JSON parsing works as before, except that if any errors occur while reading the JSON or extracting it to a list of "GithubIssue" items an empty list will be returned.
+
+
+[source,scala]
+-------------------------------------------------------------------------------
+trait JSONSupport {
+
+  import org.json4s.DefaultFormats
+  import org.json4s.native.JsonMethods
+
+  implicit val formats = DefaultFormats
+
+  def parseIssuesFromJson(json: String): List[GithubIssue] = {
+    val t = Try( JsonMethods.parse(json).extract[List[GithubIssue]] )
+    t getOrElse Nil
+  }
+
+}
+-------------------------------------------------------------------------------
+
+
+The "GithubIssue" object no longer has to concern itself with JSON handling and can simply extend this trait.
+
+[source,scala]
+-------------------------------------------------------------------------------
+object GithubIssue extends JSONSupport
+-------------------------------------------------------------------------------
+
+To verify that invalid JSON content is parsed into an empty list, I've added one test that uses a subsection of the expected JSON document and another that has completely invalid JSON content. Both tests originally failed, but now pass with the new trait.
+
+[source,scala]
+-------------------------------------------------------------------------------
+it should "return an empty list when the JSON input lacks required fields" in {
+  val json: String = 
+    """[{"url": "https://api.github.com/repos/scala/scala/issues/4239"}]"""
+  val issues = GithubIssue.parseIssuesFromJson(json)
+  issues.size should equal(0)
+}
+
+it should "return an empty list when the JSON input can't be parsed" in {
+  val issues = GithubIssue.parseIssuesFromJson("""Sorry, that wasn't found""")
+  issues.size should equal(0)
+}
+-------------------------------------------------------------------------------
+
+
+c) The +io.Source.fromURL()+ function doesn't make it possible to find out the actual HTTP response code in the event of a failure. Instead, in the case of an error it throws an exception. We can catch that exception and turn it into an approximate value, however. In my version i chose 200 for a successful result (ie, no exception was thrown) versus 400 for an exception. The response code 400 is reserved for "bad requests" in the HTTP protocol, which doesn't work for all situations here (eg, the internet is down) but often is used when there is no more accurate code available.
+
+A better solution would be to switch to an HTTP client function with access to the response, such as the standard Apache HttpComponents library (famous among Java developers) or the Scala-based Dispatch library. This would make it possible to capture the original error response code in addition to an error response body from the server.
+
+That said, here is my solution to the problem. First, an "HttpSupport" trait along with an "HttpResponse" case class.
+
+[source,scala]
+-------------------------------------------------------------------------------
+case class HttpResponse(lines: List[String], code: Int)
+
+trait HttpSupport {
+
+  def readUrlAsLines(url: String): HttpResponse = {
+    Try( io.Source.fromURL(url).getLines().toList ) match {
+      case Success(l) => HttpResponse(l, 200)
+      case Failure(ex) => HttpResponse(Nil, 400)
+    }
+  }
+}
+-------------------------------------------------------------------------------
+
+Here is an updated version of the "githubClosedIssues()" function that now checks for the presence of a success (code 200) or a failure (all other codes).
+
+[source,scala]
+-------------------------------------------------------------------------------
+  /**
+   * Return a JSON document of recently closed issues in the given github repo
+   */
+  def githubClosedIssues(user: String, repo: String, count: Int): String = {
+
+    val url = s"https://api.github.com/repos/$user/$repo/issues?state=closed&per_page=$count"
+    readUrlAsLines(url) match {
+      case HttpResponse(lines, code) if code == 200 => lines.map(_.trim).mkString("")
+      case HttpResponse(l, code) => {
+        println(s"Could not read content from '$url'")
+        ""
+      }
+    }
+  }
+-------------------------------------------------------------------------------
+
+Finally, here is a new test that verifies that "githubClosedIssues()" correctly handles bad requests. In this case I'm passing it a user name that includes slashes, which will change the actual url to one that doesn't point to a valid Github repository.
+
+
+[source,scala]
+-------------------------------------------------------------------------------
+  it should "print an error when the url can't be read" in {
+    val output = withPrintlnCapture {
+      val json = githubClosedIssues("frank/en/berry", "//", 1)
+      json should equal("")
+    }
+    output should include ("Could not read content")
+  }
+-------------------------------------------------------------------------------
+
+
+
+d) This final part of the exercise involves moving yet another part of the original functionality of your application into a reusable trait. Rewriting and refactoring code to make it more useful and usable is a common practice of all developers. Therefore, decoupling code from its single use and into a reusable trait is a good skill to learn.
+
+Here is the new trait I created to format the clean fixed-width columns. It uses a case class, "FixWidthCol", to couple each column's text with its requested output size. The code which specifies the column sizes is not reusable, and so remains in the original object.
+
+[source,scala]
+-------------------------------------------------------------------------------
+case class FixWidthCol(text: String, width: Int)
+
+trait FixedWidthReportSupport {
+
+  def format(cols: List[FixWidthCol], maxWidth: Int): String = {
+    val result = cols map format mkString ("|","|","|")
+    result take maxWidth
+  }
+
+  def format(col: FixWidthCol): String = {
+    val formatting = "%-" + col.width + "." + col.width + "s"
+    formatting.format(col.text)
+  }
+
+}
+-------------------------------------------------------------------------------
+
+Here is the updated method which uses the "FixWidthCol" case class and the "FixedWidthReportSupport.format()" function.
+
+[source,scala]
+-------------------------------------------------------------------------------
+  /**
+   * Format the given strings into fixed-width columns for the issue report
+   * @param cols a list of the 5 output fields
+   * @return the output fields with fixed-width formatting
+   */
+  def formatFixedWidthColumns(cols: List[String]): String = {
+    val maxRowWidth = 130
+
+    val fixedWidthColumns = cols zip List(7, 70, 15, 9, 20) map { case (a,b) => FixWidthCol(a,b) }
+    format(fixedWidthColumns, maxRowWidth)
+  }
+
+-------------------------------------------------------------------------------
+
+The given list of strings is zipped with a list of the column widths and then mapped into a list of "FixWidthCol". The core logic in this method involves assigning a fixed column width to each of the input columns, based on their order. The actual string formatting is now handled by the trait.
+
+To verify that the new line width restriction works, I've written a new test with a ridiculously long issue title. The test verifies that the formatted output of the over-titled issue is correctly cropped down to the maximum line width.
+
+[source,scala]
+-------------------------------------------------------------------------------
+  it should "not format Github issues to go over 130 chars wide" in {
+    val ish = GithubIssue(0, "HelloWorld" * 20, GithubUser("Fred"), Nil, 1)
+    val report = formatIssue(ish)
+    println(report)
+    report.size > 130 should not be true
+  }
+-------------------------------------------------------------------------------
+
+
+
+
+

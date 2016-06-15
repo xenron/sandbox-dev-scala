@@ -1,0 +1,70 @@
+
+= LearningScalaMaterials
+
+Supplementary materials for http://shop.oreilly.com/product/0636920030287.do[Learning Scala], O'Reilly Media, 2014.
+
+
+== Source Listings
+
+
+The https://github.com/swartzrock/LearningScalaMaterials/blob/master/Sources/source_listings.asciidoc[source code for all of the book's code blocks] are available.
+
+
+== Answers to Exercises 
+
+Answers to exercises in the first four chapters are now available. The answers for the exercises in the rest of the chapter will be available by the end of December 2014.
+
+* https://github.com/swartzrock/LearningScalaMaterials/blob/master/Exercises/ch1-GettingStarted.asciidoc[Chapter 1 - Getting Started] 
+
+* https://github.com/swartzrock/LearningScalaMaterials/blob/master/Exercises/ch2-WorkingWithData.asciidoc[Chapter 2 - Working With Data] 
+
+* https://github.com/swartzrock/LearningScalaMaterials/blob/master/Exercises/ch3-ExpressionsAndConditionals.asciidoc[Chapter 3 - Expressions and Conditionals] 
+
+* https://github.com/swartzrock/LearningScalaMaterials/blob/master/Exercises/ch4-Functions.asciidoc[Chapter 4 - Functions] 
+
+* https://github.com/swartzrock/LearningScalaMaterials/blob/master/Exercises/ch5-FirstClassFunctions.asciidoc[Chapter 5 - First Class Functions] 
+
+* https://github.com/swartzrock/LearningScalaMaterials/blob/master/Exercises/ch6-CommonCollections.asciidoc[Chapter 6 - Common Collections] 
+
+* https://github.com/swartzrock/LearningScalaMaterials/blob/master/Exercises/ch7-MoreCollections.asciidoc[Chapter 7 - More Collections] 
+
+* https://github.com/swartzrock/LearningScalaMaterials/blob/master/Exercises/ch8-Classes.asciidoc[Chapter 8 - Classes] 
+
+* https://github.com/swartzrock/LearningScalaMaterials/blob/master/Exercises/ch9-ObjectsCaseClassesAndTraits.asciidoc[Chapter 9 - Object, Case Classes and Traits] 
+
+
+
+== Errata
+
+Here are some of the known errors in the first edition of http://shop.oreilly.com/product/0636920030287.do[Learning Scala] . Thank you to all of the readers who have reported them!
+
+
+
+* https://github.com/swartzrock/LearningScalaMaterials/blob/master/Errata/ch1-GettingStarted.asciidoc[Chapter 1 - Getting Started] 
+
+// * https://github.com/swartzrock/LearningScalaMaterials/blob/master/Errata/ch2-WorkingWithData.asciidoc[Chapter 2 - Working With Data] 
+
+* https://github.com/swartzrock/LearningScalaMaterials/blob/master/Errata/ch3-ExpressionsAndConditionals.asciidoc[Chapter 3 - Expressions and Conditionals] 
+
+// * https://github.com/swartzrock/LearningScalaMaterials/blob/master/Errata/ch4-Functions.asciidoc[Chapter 4 - Functions] 
+
+// * https://github.com/swartzrock/LearningScalaMaterials/blob/master/Errata/ch5-FirstClassFunctions.asciidoc[Chapter 5 - First Class Functions] 
+
+* https://github.com/swartzrock/LearningScalaMaterials/blob/master/Errata/ch6-CommonCollections.asciidoc[Chapter 6 - Common Collections] 
+
+* https://github.com/swartzrock/LearningScalaMaterials/blob/master/Errata/ch7-MoreCollections.asciidoc[Chapter 7 - More Collections] 
+
+* https://github.com/swartzrock/LearningScalaMaterials/blob/master/Errata/ch8-Classes.asciidoc[Chapter 8 - Classes] 
+
+* https://github.com/swartzrock/LearningScalaMaterials/blob/master/Errata/ch9-ObjectsCaseClassesAndTraits.asciidoc[Chapter 9 - Object, Case Classes and Traits] 
+
+
+
+
+
+
+
+== Copyright and license
+
+Code and materials copyright 2014-2015 Jason Swartz. Released under the link:LICENCE[the MIT license] .
+
