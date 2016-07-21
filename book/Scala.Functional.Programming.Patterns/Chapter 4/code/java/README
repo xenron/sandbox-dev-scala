@@ -1,0 +1,4 @@
+Just doing the following two steps should get you going!
+
+mvn compile
+mvn exec:java -Dexec.mainClass="chap04.Driver"

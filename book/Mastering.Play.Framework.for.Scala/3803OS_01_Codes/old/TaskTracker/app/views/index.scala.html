@@ -1,0 +1,36 @@
+@(tasks: List[Task], taskForm: Form[String])
+
+@import helper._
+
+@main("Task Tracker") {
+
+    <h2>Task Tracker</h2>
+
+    <div>
+    @form(routes.TaskController.newTask) {
+
+        @taskForm.globalError.map { error =>
+            <p class="error">
+                @error.message
+            </p>
+        }
+        <form>
+            <input type="text" name="taskName" placeholder="Add a new Task" required>
+
+            <input type="submit" value="Add">
+        </form>
+    }
+    </div>
+    <div>
+        <ul>
+        @tasks.map { task =>
+            <li>
+                @form(routes.TaskController.deleteTask(task.id)) {
+                    @task.name <input type="submit" value="Remove">
+                }
+            </li>
+        }
+        </ul>
+    </div>
+
+}

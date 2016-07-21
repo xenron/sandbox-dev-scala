@@ -1,0 +1,9 @@
+The following scala version was used to test example code
+
+% scala -version
+Scala code runner version 2.11.6 -- Copyright 2002-2013, LAMP/EPFL
+
+The following should run it
+
+scalac Sieve.scala
+scala Sieve

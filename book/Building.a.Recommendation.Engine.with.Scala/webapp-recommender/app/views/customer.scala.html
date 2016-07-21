@@ -1,0 +1,47 @@
+@(itemOpt: Option[(model.Customer, Option[String])])
+
+@main("Customer Details", "customer") {
+	@for(item <- itemOpt) {
+<table>
+<tr>
+<td valign="top">
+    	@customer_view(Some(item._1))
+</td>
+<td valign="top">
+		@defining(item._2) { amazonItemOpt =>
+			@amazonItemOpt.map { aitem =>
+				Amazon Customer ID:	<b>@aitem</b>
+				<div>
+				  Top 10 recommendations <div id="userRecommendations">Loading...</div>
+				</div>
+				
+	<script lang="text/javascript">
+		console.log("searching user recommendations");
+		function searchHandler() {
+			$("#userRecommendations").html("Loading...");
+
+			var dataUrl = "/recommendation/for/customer/@aitem/";
+			$.get(dataUrl, function(data) {
+				var hits = data.results;
+				var i;
+				var htmlText = data.message + "<br/>\n";
+				for (asin in hits) {
+					var rating = hits[asin];
+				    var tags = "<a target='_blank' href='/product/asin/"+asin+"'>"+asin+" ("+rating+")"+"</a>";
+					htmlText = htmlText + tags + "<br/>\n";
+				}
+				htmlText = htmlText + "";
+				$("#userRecommendations").html(htmlText);
+			});
+
+		}
+		$(document).ready(searchHandler());
+	</script>
+</td>
+</tr>
+</table>
+			}
+		}
+	}
+}
+
