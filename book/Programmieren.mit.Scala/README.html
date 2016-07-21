@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<html>
+<body>
+
+<h1>Programmieren mit Scala</h1>
+
+<h2>README für die Code-Beispiele</h2>
+
+<p>Dean Wampler and Alex Payne <br />
+Übersetzt und an Scala 2.8 angepasst von Jörg Staudemeyer <br />
+Oktober 2010</p>
+
+<p>Dieses Archiv enthält alle Code-Beispiele des Buchs <a href="http://www.oreilly.de/catalog/progscalager/index.html/">Programmieren mit Scala</a> mit Ausnahme einiger im Text enthaltener Code-Ausschnitte. Im Buch Beginnen alle Beispiele, zu denen es hier korrespondierende Dateien gibt, mit einer Kommentarzeile, die wie hier eine Pfadangabe enthält:</p>
+
+<pre><code>// code-examples/kapitel/../dateiname
+</code></pre>
+
+<p>Anhand dieser Kommentare können Sie die entsprechende Datei in diesem Paket finden. Außerdem enthält das Archiv Scala-<em>Specs</em> zum Testen des Code, von denen jedoch viele im Buch nicht wiedergegeben sind. <em>Specs</em> ist ein Behavior-Driven-Development-Tool (BDD-Tool) ähnlich RSpec für Ruby. Es wird im Kapitel <em>Werkzeuge und Bibliotheken</em> des Buchs behandelt.</p>
+
+<h2>Namenskonventionen</h2>
+
+<p>Zu den Beispielen gehören Scripts, die mit dem <code>scala</code>-Befehl ausgeführt werden, Quelldateien, die mit <code>scala</code> zu kompilieren sind sowie Quelldateien, die absichtlich nicht kompilierbar sind. Um sie auseinander zu halten und um den Build-Prozess zu vereinfachen werden für die Dateien folgende Namenskonventionen verwendet.</p>
+
+<ul>
+<li><code>*-script.scala</code> - Scripts, die Sie beispielsweise mit <code>scala foo-script.scala</code> ausführen können. Dieses Scripts werden innerhalb des normalen Compile- und Testprozesses ausgeführt, allerdings werden ihre Ausgaben derzeit nicht automatisch auf Korrektheit geprüft. (Wenn sie aber regelrecht versagen, scheitert der ganze Build-Vorgang.)</li>
+<li><code>*-wont-compile.scala</code> - Scala-Dateien, die im Buch verwendet werden, sich aber absichtlich nicht kompilieren lassen. Sie sind vom Build-Prozess ausgeschlossen.</li>
+<li>Alle anderen <code>*.scala</code>-Dateien - Kompilierbare Scala-Dateien</li>
+</ul>
+
+<h2>Build-Prozess für die Code-Beispiele</h2>
+
+<p>Der im englischsprachigen Original verwendete Build-Prozess kann hier nicht benutzt werden, da das von den Autoren selbst geschriebene Build-Tool noch nicht für Scala 2.8 verfügbar ist.</p>
+
+<p>Die Code-Beispiele sind aber trotzdem alle getestet worden. Sobald das Build-Tool in der richtigen Version vorliegt, sollen auch die entsprechenden Build-Skripte zur Verfügung gestellt werden.</p>
+
+</body>
+</html>
