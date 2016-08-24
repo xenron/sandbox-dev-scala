@@ -29,3 +29,5 @@ target
 out
 project/project
 project/target
+
+.DS_Store
